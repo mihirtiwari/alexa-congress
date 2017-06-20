@@ -1,4 +1,5 @@
 from flask import Flask
+from flask-ask import Ask, question, statement
 
 app = Flask(__name__)
 ask = Ask(app, '/')
@@ -28,7 +29,7 @@ def senators_state():
          statement += senators[x] + ', ' if x == len(senators) - 1 else statement += 'and ' + senators[x] + '.';
 
     return statement(s)
-    
+
 # https://pythonprogramming.net/intro-alexa-skill-flask-ask-python-tutorial/
 # https://github.com/johnwheeler/flask-ask
 # https://www.youtube.com/watch?v=cXL8FDUag-s&list=PL6LVC9c1eflVHEbiNb0_dQF0LGLLrZtNL
