@@ -1,6 +1,7 @@
 from flask import Flask
-from flask_ask import Ask, question, statement
+from flask_ask import Ask, question, statement, session
 import requests, json, os
+import logging
 
 app = Flask(__name__)
 ask = Ask(app, '/')
@@ -87,7 +88,8 @@ def get_senators(postal_code):
         "I": "Independent"
     }
 
-    # handle Washington DC
+    if len(r["results"]) == 0:
+        return []
 
     for result in r["results"]:
         name = result["name"]
@@ -113,8 +115,6 @@ def get_house_reps(postal_code, district):
         "I": "Independent"
     }
 
-    # handle Washington DC
-
     for result in r["results"]:
         name = result["name"]
         party = parties[result["party"]]
@@ -124,7 +124,7 @@ def get_house_reps(postal_code, district):
     return house
 
 def get_num_reps(postal_code):
-    url = MEMBERS_URL + "house/" + postal_code + "/" + district + "/current.json"
+    url = MEMBERS_URL + "house/" + postal_code + "/current.json"
     house = {}
     req = requests.get(url, headers=HEADERS)
 
@@ -161,14 +161,14 @@ def senators_state(state):
     if len(senators) is 0:
         return statement("Your request could not be processed.")
 
-    s = "Your senators are: \n"
+    s = "Your senators are: "
 
     s += "Senator " + senators.keys()[0] + " (" + senators[senators.keys()[0]] + ") and "
     s += "Senator " + senators.keys()[1] + " (" + senators[senators.keys()[1]] + ")."
 
     return statement(s)
 
-# figure out how to get district and state and all symantics
+# TODO: figure out how to get district and state and all symantics
 @ask.intent('HouseNoStateIntent')
 def house_no_state():
     q = "What state would you like representatives for?"
@@ -183,7 +183,7 @@ def house_no_district():
 
 @ask.intent('HouseStateDistrictSeparateIntent')
 def house_state_district_separate(district):
-    state = session.attribute['state']
+    state = session.attributes['state'] # TODO: have to figure this out
     if state is None:
         return statement('Invalid request given.')
 
@@ -204,7 +204,6 @@ def house_proper(state, district):
     if len(house) is 0:
         return statement("Your request could not be processed.")
 
-    # print house reps
     h = "Your representative is " + house.keys()[0] + " (" + house[house.keys()[0]] + ")"
 
     return statement(h)
@@ -229,7 +228,7 @@ def num_reps_state(state):
     if num == -1:
         return statement("Your request could not be processed.")
 
-    return statement('There are ' + str(num) + 'representatives in the state of ' + state)
+    return statement('There are ' + str(num) + ' representatives in the state of ' + state)
 
 @ask.intent('NumberofSenatorsIntent')
 def num_senators():
@@ -248,20 +247,37 @@ def num_senators_state(state):
 
     return statement('There are 2 senators in the state of ' + state)
 
+@ask.intent('AmbiguousIntent')
+def unknown(state):
+    found = False
+    for s in us_state_abbrev.keys():
+        if state.lower() == s.lower():
+            state = s
+            found = True
+
+    if found is False:
+        return statement("Invalid state given.")
+
+    q = "Would you like senators or representatives for " + state + "?"
+
+    return question(q)
+
 @ask.intent('AMAZON.HelpIntent')
 def help():
     s = 'Thanks for using Congress Reps! To know a state\'s senators, say \'Who are the senators'
-    s += ' for\' and then the state name. To know a state\'s representatives by district, say '
-    s += '\'Who are the representatives for\' and then the state name and then \' for district\' '
+    s += ' for...\' and then the state name. To know a state\'s representatives by district, say '
+    s += '\'Who is the representative for...\' and then the state name and then \' ...for district...\' '
     s += 'and then the district number. To ask how many senators a state has, ask \'How many senators'
-    s += ' for\' and then the state\'s name. To ask how many representatives a state has, ask '
-    s += '\'How many representatives for\' and then the state\'s name.'
+    s += ' for...\' and then the state\'s name. To ask how many representatives a state has, ask '
+    s += '\'How many representatives for...\' and then the state\'s name.'
 
     return statement(s);
 
 @ask.session_ended
 def session_ended():
     return "{}", 200
+
+logging.getLogger('flask_ask').setLevel(logging.DEBUG)
 
 if __name__ == '__main__':
     app.run(debug=True)
