@@ -10,7 +10,7 @@ MEMBERS_URL = "https://api.propublica.org/congress/v1/members/"
 API_KEY = os.environ['API_KEY']
 HEADERS = {"X-API-Key": API_KEY}
 
-SENATE_OR_HOUSE = 'senate'
+# session.attributes['senate_or_house'] = ''
 
 us_state_abbrev = {
     'Alabama': 'AL',
@@ -140,11 +140,11 @@ def start():
     q = "Hello, welcome to Congress Reps! For help, say \'Help\'. What would you like to know about our Congress?"
     return question(q)
 
-@ask.intent('SenateNoStateIntent')
-def senators_no_state():
-    q = "What state would you like senators for?"
-
-    return question(q)
+# @ask.intent('SenateNoStateIntent')
+# def senators_no_state():
+#     q = "What state would you like senators for?"
+#
+#     return question(q)
 
 @ask.intent('SenateStateIntent')
 def senators_state(state):
@@ -169,23 +169,56 @@ def senators_state(state):
     return statement(s)
 
 # TODO: figure out how to get district and state and all symantics
-@ask.intent('HouseNoStateIntent')
-def house_no_state():
-    q = "What state would you like representatives for?"
+# @ask.intent('HouseNoStateIntent')
+# def house_no_state():
+#     q = "What state would you like representatives for?"
+#
+#     return question(q);
 
-    return question(q);
+@ask.intent('ChoiceSpokenIntent')
+def choice_spoken(choice):
+    if ('senator' or 'senate') in choice:
+        session.attributes['senate_or_house'] = 'senate'
+        q = 'What state would you like senators for?'
+        return question(q)
+    elif ('representative' or 'house of representatives') in choice:
+        session.attributes['senate_or_house'] = 'house'
+        q = 'What state would you like representatives for?'
+        return question(q)
+    else:
+        return statement('Your request could not be processed.')
 
-@ask.intent('HouseNoDistrictIntent')
-def house_no_district():
-    q = "What district would you like representatives for?"
+@ask.intent('StateSpokenIntent')
+def state_spoken(state):
+    SENATE_OR_HOUSE = session.attributes['senate_or_house']
+    print(SENATE_OR_HOUSE)
+    if SENATE_OR_HOUSE == 'senate':
+        senators_state(state)
+    elif SENATE_OR_HOUSE == 'house':
+        session.attributes['state'] = state
+        q = "What district would you like representatives for?"
 
-    return question(q);
+        return question(q);
+    else:
+        return statement('Your request could not be processed.')
 
+# @ask.intent('HouseNoDistrictIntent')
+# def house_no_district():
+#     q = "What district would you like representatives for?"
+#
+#     return question(q);
+
+# session.attributes not working; also need to figure out how to better handle saying only the state
+# name and distinctions between senate and house; also need to better figure out how to handle
+# state and district separately
+
+# https://blog.ouseful.info/2016/09/23/a-first-attempt-at-an-amazon-echo-alexa-skills-app-using-python-parlibot-a-uk-parliament-agent/
+# https://blog.craftworkz.co/flask-ask-a-tutorial-on-a-simple-and-easy-way-to-build-complex-alexa-skills-426a6b3ff8bc
 @ask.intent('HouseStateDistrictSeparateIntent')
 def house_state_district_separate(district):
     state = session.attributes['state'] # TODO: have to figure this out
-    if state is None:
-        return statement('Invalid request given.')
+    # if state is None:
+    #     return statement('Invalid request given.')
 
     house_proper(state, district)
 
@@ -247,20 +280,20 @@ def num_senators_state(state):
 
     return statement('There are 2 senators in the state of ' + state)
 
-@ask.intent('AmbiguousIntent')
-def unknown(state):
-    found = False
-    for s in us_state_abbrev.keys():
-        if state.lower() == s.lower():
-            state = s
-            found = True
-
-    if found is False:
-        return statement("Invalid state given.")
-
-    q = "Would you like senators or representatives for " + state + "?"
-
-    return question(q)
+# @ask.intent('AmbiguousIntent')
+# def unknown(state):
+#     found = False
+#     for s in us_state_abbrev.keys():
+#         if state.lower() == s.lower():
+#             state = s
+#             found = True
+#
+#     if found is False:
+#         return statement("Invalid state given.")
+#
+#     q = "Would you like senators or representatives for " + state + "?"
+#
+#     return question(q)
 
 @ask.intent('AMAZON.HelpIntent')
 def help():
@@ -277,7 +310,7 @@ def help():
 def session_ended():
     return "{}", 200
 
-logging.getLogger('flask_ask').setLevel(logging.DEBUG)
+# logging.getLogger('flask_ask').setLevel(logging.DEBUG)
 
 if __name__ == '__main__':
     app.run(debug=True)
