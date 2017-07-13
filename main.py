@@ -99,8 +99,6 @@ def get_senators(postal_code):
     return senators
 
 def get_house_reps(postal_code, district):
-    # print(postal_code)
-    # print(district)
     url = MEMBERS_URL + "house/" + postal_code + "/" + district + "/current.json"
     house = {}
     req = requests.get(url, headers=HEADERS)
@@ -154,7 +152,6 @@ def senators_state(state):
     if found is False:
         return statement("Invalid state given.")
 
-    # print('in senators_state method')
     senators = get_senators(us_state_abbrev[state])
     if len(senators) is 0:
         return statement("Your request could not be processed.")
@@ -164,11 +161,14 @@ def senators_state(state):
     s += "Senator " + senators.keys()[0] + " (" + senators[senators.keys()[0]] + ") and "
     s += "Senator " + senators.keys()[1] + " (" + senators[senators.keys()[1]] + ")."
 
-    return statement(s)
+    card_statement = "The senators for " + state + " are: Senator "
+    card_statement += senators.keys()[0] + " (" + senators[senators.keys()[0]] + ") and "
+    card_statement += "Senator " + senators.keys()[1] + " (" + senators[senators.keys()[1]] + ")."
+
+    return statement(s).simple_card(title="Congress Reps says...", content=card_statement)
 
 @ask.intent('ChoiceSpokenIntent')
 def choice_spoken(choice):
-    # print(choice)
     if choice.find('senate') != -1 or choice.find('senator') != -1:
         session.attributes['senate_or_house'] = 'senate'
         q = 'What state would you like senators for?'
@@ -196,6 +196,15 @@ def state_spoken(state):
 @ask.intent('HouseStateSeparateIntent')
 def house_state_separate(state):
     session.attributes['senate_or_house'] = 'house'
+    found = False
+    for s in us_state_abbrev.keys():
+        if state.lower() == s.lower():
+            state = s
+            found = True
+
+    if found is False:
+        return statement("Invalid state given.")
+
     return state_spoken(state)
 
 @ask.intent('HouseStateDistrictSeparateIntent')
@@ -227,11 +236,15 @@ def house_proper(state, district):
 
     h = "Your representative is " + house.keys()[0] + " (" + house[house.keys()[0]] + ")"
 
-    return statement(h)
+    card_statement = "The representative for " + state + " district " + str(district)
+    card_statement += " is representative " + house.keys()[0] + " (" + house[house.keys()[0]] + ")"
+
+    return statement(h).simple_card(title="Congress Reps says...", content=card_statement)
 
 @ask.intent('NumberofRepsTotalIntent')
 def num_reps():
-    return statement('Currently there are 435 representatives in the House of Representatives.')
+    s = 'Currently there are 435 representatives in the House of Representatives.'
+    return statement(s).simple_card(title="Congress Reps says...", content=s)
 
 @ask.intent('NumberofRepsStateIntent')
 def num_reps_state(state):
@@ -249,11 +262,14 @@ def num_reps_state(state):
     if num == -1:
         return statement("Your request could not be processed.")
 
-    return statement('There are ' + str(num) + ' representatives in the state of ' + state)
+    s = 'There are ' + str(num) + ' representatives in the state of ' + state
+
+    return statement(s).simple_card(title="Congress Reps says...", content=s)
 
 @ask.intent('NumberofSenatorsIntent')
 def num_senators():
-    return statement('Currently there are 100 senators in the Senate')
+    s = 'Currently there are 100 senators in the Senate'
+    return statement(s).simple_card(title="Congress Reps says...", content=s)
 
 @ask.intent('NumberofSenatorsStateIntent')
 def num_senators_state(state):
@@ -266,7 +282,9 @@ def num_senators_state(state):
     if found is False:
         return statement("Invalid state given.")
 
-    return statement('There are 2 senators in the state of ' + state)
+    s = 'There are 2 senators in the state of ' + state
+
+    return statement(s).simple_card(title="Congress Reps says...", content=s)
 
 @ask.intent('AMAZON.HelpIntent')
 def help():
@@ -279,6 +297,12 @@ def help():
 
     return statement(s);
 
+@ask.intent('AMAZON.StopIntent')
+def canceled():
+    s = "Goodbye."
+
+    return statement(s)
+
 @ask.session_ended
 def session_ended():
     return "{}", 200
@@ -288,3 +312,5 @@ logging.getLogger('flask_ask').setLevel(logging.DEBUG)
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host="0.0.0.0", port=port)
+    app.config['ASK_APPLICATION_ID'] = os.environ['APP_ID']
+    app.config['ASK_VERIFY_REQUESTS'] = True
