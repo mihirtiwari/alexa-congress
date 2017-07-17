@@ -173,8 +173,6 @@ def senators_state(state):
 
 @ask.intent('ChoiceSpokenIntent')
 def choice_spoken(choice):
-    if not session.attributes:
-        return statement("Your request could not be processed.")
     if choice.find('senate') != -1 or choice.find('senator') != -1:
         session.attributes['senate_or_house'] = 'senate'
         q = 'What state would you like senators for?'
