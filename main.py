@@ -6,11 +6,13 @@ import logging
 app = Flask(__name__)
 ask = Ask(app, '/')
 
+app.config['ASK_APPLICATION_ID'] = os.environ['APP_ID']
+app.config['ASK_VERIFY_REQUESTS'] = True
+
 MEMBERS_URL = "https://api.propublica.org/congress/v1/members/"
 API_KEY = os.environ['API_KEY']
 HEADERS = {"X-API-Key": API_KEY}
 
-# TODO: make a similar thing for postal codes
 us_state_abbrev = {
     'Alabama': 'AL',
     'Alaska': 'AK',
@@ -143,9 +145,11 @@ def start():
 
 @ask.intent('SenateStateIntent')
 def senators_state(state):
+    if state is None:
+        return statement("Your request could not be processed.")
     found = False
     for s in us_state_abbrev.keys():
-        if state.lower() == s.lower():
+        if state.lower() == s.lower() or state.lower() == us_state_abbrev[s].lower():
             state = s
             found = True
 
@@ -169,11 +173,13 @@ def senators_state(state):
 
 @ask.intent('ChoiceSpokenIntent')
 def choice_spoken(choice):
+    if not session.attributes:
+        return statement("Your request could not be processed.")
     if choice.find('senate') != -1 or choice.find('senator') != -1:
         session.attributes['senate_or_house'] = 'senate'
         q = 'What state would you like senators for?'
         return question(q)
-    elif choice.find('representative') != -1 or choice.find('house of representatives') != -1:
+    elif choice.find('rep') != -1 or choice.find('representative') != -1 or choice.find('house of representatives') != -1:
         session.attributes['senate_or_house'] = 'house'
         q = 'What state would you like representatives for?'
         return question(q)
@@ -182,6 +188,8 @@ def choice_spoken(choice):
 
 @ask.intent('StateSpokenIntent')
 def state_spoken(state):
+    if not session.attributes:
+        return statement("Your request could not be processed.")
     SENATE_OR_HOUSE = session.attributes['senate_or_house']
     if SENATE_OR_HOUSE == 'senate':
         return senators_state(state)
@@ -195,10 +203,12 @@ def state_spoken(state):
 
 @ask.intent('HouseStateSeparateIntent')
 def house_state_separate(state):
+    if state is None:
+        return statement("Your request could not be processed.")
     session.attributes['senate_or_house'] = 'house'
     found = False
     for s in us_state_abbrev.keys():
-        if state.lower() == s.lower():
+        if state.lower() == s.lower() or state.lower() == us_state_abbrev[s].lower():
             state = s
             found = True
 
@@ -217,9 +227,11 @@ def house_state_district_separate(district):
 
 @ask.intent('HouseProperIntent')
 def house_proper(state, district):
+    if state is None:
+        return statement("Your request could not be processed.")
     found = False
     for s in us_state_abbrev.keys():
-        if state.lower() == s.lower():
+        if state.lower() == s.lower() or state.lower() == us_state_abbrev[s].lower():
             state = s
             found = True
 
@@ -250,7 +262,7 @@ def num_reps():
 def num_reps_state(state):
     found = False
     for s in us_state_abbrev.keys():
-        if state.lower() == s.lower():
+        if state.lower() == s.lower() or state.lower() == us_state_abbrev[s].lower():
             state = s
             found = True
 
@@ -273,9 +285,11 @@ def num_senators():
 
 @ask.intent('NumberofSenatorsStateIntent')
 def num_senators_state(state):
+    if state is None:
+        return statement("Your request could not be processed.")
     found = False
     for s in us_state_abbrev.keys():
-        if state.lower() == s.lower():
+        if state.lower() == s.lower() or state.lower() == us_state_abbrev[s].lower():
             state = s
             found = True
 
