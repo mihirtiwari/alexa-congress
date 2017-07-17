@@ -140,7 +140,7 @@ def get_num_reps(postal_code):
 
 @ask.launch
 def start():
-    q = "Hello, welcome to Congress Reps! For help, say \'Help\'. What would you like to know about our Congress?"
+    q = "Hello, welcome to Congress Facts! For help, say \'Help\'. What would you like to know about our Congress?"
     return question(q)
 
 @ask.intent('SenateStateIntent')
@@ -169,7 +169,7 @@ def senators_state(state):
     card_statement += senators.keys()[0] + " (" + senators[senators.keys()[0]] + ") and "
     card_statement += "Senator " + senators.keys()[1] + " (" + senators[senators.keys()[1]] + ")."
 
-    return statement(s).simple_card(title="Congress Reps says...", content=card_statement)
+    return statement(s).simple_card(title="Congress Facts says...", content=card_statement)
 
 @ask.intent('ChoiceSpokenIntent')
 def choice_spoken(choice):
@@ -249,12 +249,12 @@ def house_proper(state, district):
     card_statement = "The representative for " + state + " district " + str(district)
     card_statement += " is representative " + house.keys()[0] + " (" + house[house.keys()[0]] + ")"
 
-    return statement(h).simple_card(title="Congress Reps says...", content=card_statement)
+    return statement(h).simple_card(title="Congress Facts says...", content=card_statement)
 
 @ask.intent('NumberofRepsTotalIntent')
 def num_reps():
     s = 'Currently there are 435 representatives in the House of Representatives.'
-    return statement(s).simple_card(title="Congress Reps says...", content=s)
+    return statement(s).simple_card(title="Congress Facts says...", content=s)
 
 @ask.intent('NumberofRepsStateIntent')
 def num_reps_state(state):
@@ -274,12 +274,12 @@ def num_reps_state(state):
 
     s = 'There are ' + str(num) + ' representatives in the state of ' + state
 
-    return statement(s).simple_card(title="Congress Reps says...", content=s)
+    return statement(s).simple_card(title="Congress Facts says...", content=s)
 
 @ask.intent('NumberofSenatorsIntent')
 def num_senators():
     s = 'Currently there are 100 senators in the Senate'
-    return statement(s).simple_card(title="Congress Reps says...", content=s)
+    return statement(s).simple_card(title="Congress Facts says...", content=s)
 
 @ask.intent('NumberofSenatorsStateIntent')
 def num_senators_state(state):
@@ -296,11 +296,11 @@ def num_senators_state(state):
 
     s = 'There are 2 senators in the state of ' + state
 
-    return statement(s).simple_card(title="Congress Reps says...", content=s)
+    return statement(s).simple_card(title="Congress Facts says...", content=s)
 
 @ask.intent('AMAZON.HelpIntent')
 def help():
-    s = 'Thanks for using Congress Reps! To know a state\'s senators, say \'Who are the senators'
+    s = 'Thanks for using Congress Facts! To know a state\'s senators, say \'Who are the senators'
     s += ' for...\' and then the state name. To know a state\'s representatives by district, say '
     s += '\'Who is the representative for...\' and then the state name and then \' ...for district...\' '
     s += 'and then the district number. To ask how many senators a state has, ask \'How many senators'
